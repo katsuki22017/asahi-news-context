@@ -1,0 +1,84 @@
+import Anthropic from "@anthropic-ai/sdk";
+import type { Article, AnalyzeResult } from "./types";
+
+// APIキーは環境変数からのみ読み込む(クライアントに絶対に渡さないこと)。
+// ローカル開発では .env.local に ANTHROPIC_API_KEY=sk-ant-... を設定し、
+// Vercelにデプロイするときは Vercel の Environment Variables に同じキーを登録する。
+const client = new Anthropic({
+  apiKey: process.env.ANTHROPIC_API_KEY,
+});
+
+// 使用するモデル。Anthropicのモデル一覧は時期によって変わるため、
+// 実際にデプロイする前に https://docs.claude.com/en/docs/about-claude/models で
+// 最新のモデルIDを確認し、必要なら ANTHROPIC_MODEL 環境変数で上書きしてください。
+const MODEL = process.env.ANTHROPIC_MODEL || "claude-sonnet-4-5-20250929";
+
+const SYSTEM_PROMPT = `あなたは高校生向けニュース解説アシスタントです。
+目的は、高校生が日常で感じた出来事(値上げ・不便さなど)を、社会・政治の問題として理解する手助けをすることです。
+
+【最重要ルール】
+- 与えられた「参考記事」に書かれている情報だけを事実の根拠として使ってください。
+- 参考記事に無い具体的な統計・日付・固有名詞を勝手に作り出さないでください(ハルシネーション禁止)。
+- 参考記事の中に一般的な背景知識で補足したほうが理解しやすい部分がある場合は、
+  「一般的に知られていること」と「参考記事に書かれていること」を混同せず、
+  出典が不確かな情報は断定せず「〜と言われています」のように書いてください。
+- 参考記事のURLを絶対に改変しないでください。存在しないURLを作らないでください。
+- 出力は指定されたJSON形式のみで返してください。JSON以外の文章は出力しないでください。`;
+
+function buildUserPrompt(userInput: string, articles: Article[]): string {
+  const articlesText = articles
+    .map(
+      (a, i) =>
+        `[記事${i + 1}] タイトル: ${a.title}\n掲載日: ${a.date}\n要約: ${a.summary}\nURL: ${a.url}`
+    )
+    .join("\n\n");
+
+  return `高校生の入力(つぶやき):「${userInput}」
+
+参考記事:
+${articlesText || "(該当する記事が見つかりませんでした)"}
+
+以下のJSON形式で出力してください。
+
+{
+  "timeline": [{"date": "YYYY-MM または YYYY-MM-DD", "description": "出来事の説明(参考記事の内容に基づく)"}],
+  "causalExplanation": "身近な出来事が、どういう流れで社会・政治の問題につながっているかを、高校生にも分かる言葉で3〜5文程度で説明する文章",
+  "personalRelevance": "これが読者自身の生活や将来にどう関係するかを1〜2文でまとめた文章"
+}`;
+}
+
+export async function generateContext(
+  userInput: string,
+  matchedArticles: Article[]
+): Promise<Pick<AnalyzeResult, "timeline" | "causalExplanation" | "personalRelevance">> {
+  const message = await client.messages.create({
+    model: MODEL,
+    max_tokens: 1024,
+    system: SYSTEM_PROMPT,
+    messages: [
+      {
+        role: "user",
+        content: buildUserPrompt(userInput, matchedArticles),
+      },
+    ],
+  });
+
+  const textBlock = message.content.find((block) => block.type === "text");
+  if (!textBlock || textBlock.type !== "text") {
+    throw new Error("AIからのテキスト応答がありませんでした");
+  }
+
+  // AIがコードブロック(```json ... ```)で返してくることがあるので剥がす
+  const raw = textBlock.text.trim().replace(/^```json\s*|\s*```$/g, "");
+
+  try {
+    const parsed = JSON.parse(raw);
+    return {
+      timeline: parsed.timeline ?? [],
+      causalExplanation: parsed.causalExplanation ?? "",
+      personalRelevance: parsed.personalRelevance ?? "",
+    };
+  } catch {
+    throw new Error("AIの応答をJSONとして解析できませんでした: " + raw.slice(0, 200));
+  }
+}

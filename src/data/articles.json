@@ -1,0 +1,29 @@
+[
+  {
+    "id": "SAMPLE-price-01",
+    "title": "【サンプルです・実記事に差し替えてください】食品や日用品の値上げが続く背景",
+    "url": "https://www.asahi.com/articles/REPLACE_ME",
+    "date": "2024-01-01",
+    "summary": "【これはダミーデータです】実際の朝日新聞デジタルの記事タイトル・URL・要約に置き換えてください。",
+    "keywords": ["物価高", "値上げ", "コンビニ", "食品", "生活費"],
+    "topic": "物価高"
+  },
+  {
+    "id": "SAMPLE-election-01",
+    "title": "【サンプルです・実記事に差し替えてください】若者の投票率はなぜ低いのか",
+    "url": "https://www.asahi.com/articles/REPLACE_ME",
+    "date": "2024-01-01",
+    "summary": "【これはダミーデータです】実際の朝日新聞デジタルの記事タイトル・URL・要約に置き換えてください。",
+    "keywords": ["選挙", "投票率", "若者", "政治参加"],
+    "topic": "若者と政治"
+  },
+  {
+    "id": "SAMPLE-education-01",
+    "title": "【サンプルです・実記事に差し替えてください】奨学金返済に苦しむ若者たち",
+    "url": "https://www.asahi.com/articles/REPLACE_ME",
+    "date": "2024-01-01",
+    "summary": "【これはダミーデータです】実際の朝日新聞デジタルの記事タイトル・URL・要約に置き換えてください。",
+    "keywords": ["奨学金", "教育費", "大学", "家計"],
+    "topic": "教育費"
+  }
+]

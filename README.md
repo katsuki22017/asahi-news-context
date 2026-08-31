@@ -1,36 +1,70 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# コトツナ
 
-## Getting Started
+日常で感じた小さな「あれ？」を、社会や政治とのつながりに変えるチャット型Webサービスです。
 
-First, run the development server:
+朝日新聞社の1dayイベントで行われたアイデアソン「高校生の社会問題への関心を高めるWebサービスを、朝日のアセットを利用して考える」に参加した際に生まれたアイデアを、個人開発として実装しました。
+
+## 背景・課題意識
+
+高校生は「コンビニのおにぎりが値上がりした」「奨学金の話をよく聞く」といった身近な出来事は経験していても、それが物価政策や教育政策といった社会・政治の問題とつながっていることに気づきにくい、という仮説からスタートしました。断片的な出来事の記憶だけでは、ニュースを「自分ごと」として捉えることが難しく、将来の選挙参加などにもつながりにくいと考えました。
+
+## 解決アプローチ
+
+チャット形式で身近な出来事を入力すると、次の3つを提示します。
+
+1. 関連する朝日新聞デジタルの記事(タイトル・要約・実際のURL)
+2. その出来事に関する年表(いつ、何が起きたか)
+3. 身近な出来事と社会・政治の問題をつなぐ因果関係の説明
+
+出典を明示し、AIが生成する説明は「提示された記事の内容にもとづくもの」に限定することで、断片的な知識ではなく、根拠のあるつながった知識を得られることを目指しています。
+
+## 機能
+
+- チャット形式のシンプルなUI
+- 入力文からのキーワードマッチングによる関連記事の一次絞り込み(サーバーサイド)
+- Claude APIによる年表・因果関係・自分ごと化の説明文生成(参照記事のみを根拠とするようプロンプトで制御)
+- レート制限・入力文字数制限などの基本的な安全対策
+
+## 技術スタック
+
+- Next.js (App Router) / TypeScript
+- Tailwind CSS
+- Anthropic Claude API (`@anthropic-ai/sdk`)
+- Vercel(デプロイ想定)
+
+## セットアップ(ローカル開発)
 
 ```bash
+npm install
+cp .env.local.example .env.local
+# .env.local を開いて ANTHROPIC_API_KEY を実際の値に書き換える
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+http://localhost:3000 で確認できます。
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 公開前に必ずやること(重要)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+`src/data/articles.json` は現在ダミーデータです。実際の朝日新聞デジタルの記事に差し替えてから公開してください。手順は `src/data/ARTICLES_TODO.md` を参照してください。ダミーデータのまま公開すると、存在しない記事URLを本物のように表示してしまいます。
 
-## Learn More
+## セキュリティ上の配慮
 
-To learn more about Next.js, take a look at the following resources:
+- Claude APIキーはサーバーサイド(API Route)でのみ使用し、環境変数から読み込みます。クライアントに露出しません。
+- 記事本文をスクレイピングせず、見出し・URL・自分の言葉での要約のみを保持しています(著作権・利用規約への配慮)。
+- AIへのプロンプトで「提示した記事にない事実を作り出さない」ことを明示的に指示し、実在しない出典が出力されるリスクを抑えています。
+- IPアドレスベースの簡易レート制限、入力文字数の上限(200文字)を設けています。
+- チャット履歴はサーバーに保存していません(セッション内のみ)。
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## デプロイ
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+1. このリポジトリをGitHubにpushする
+2. [Vercel](https://vercel.com) でリポジトリをインポート
+3. Vercelの Environment Variables に `ANTHROPIC_API_KEY` を設定
+4. デプロイ
 
-## Deploy on Vercel
+## 今後の展望
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- 記事データセットの拡充、カテゴリ・地域別の記事追加
+- リアルタイム記事検索APIとの連携(現在は手動収集したデータセットのみで動作)
+- ユーザーが読んだ記事の履歴をもとにした関連トピックのレコメンド
+- 高校の授業(公民・現代社会)での活用を想定したモード
