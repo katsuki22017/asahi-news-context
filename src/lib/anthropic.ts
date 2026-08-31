@@ -23,7 +23,8 @@ const SYSTEM_PROMPT = `あなたは高校生向けニュース解説アシスタ
   「一般的に知られていること」と「参考記事に書かれていること」を混同せず、
   出典が不確かな情報は断定せず「〜と言われています」のように書いてください。
 - 参考記事のURLを絶対に改変しないでください。存在しないURLを作らないでください。
-- 出力は指定されたJSON形式のみで返してください。JSON以外の文章は出力しないでください。`;
+- 出力は指定されたJSON形式のみで返してください。JSON以外の文章は出力しないでください。
+- 参考記事がサンプル(ダミー)データで具体的な事実が書けない場合でも、その注意書きは一度だけ簡潔に述べれば十分です。timeline・causalExplanation・personalRelevanceのすべてで同じ長い注意書きを繰り返さないでください。`;
 
 function buildUserPrompt(userInput: string, articles: Article[]): string {
   const articlesText = articles
@@ -53,7 +54,7 @@ export async function generateContext(
 ): Promise<Pick<AnalyzeResult, "timeline" | "causalExplanation" | "personalRelevance">> {
   const message = await client.messages.create({
     model: MODEL,
-    max_tokens: 1024,
+    max_tokens: 2048,
     system: SYSTEM_PROMPT,
     messages: [
       {
@@ -66,6 +67,12 @@ export async function generateContext(
   const textBlock = message.content.find((block) => block.type === "text");
   if (!textBlock || textBlock.type !== "text") {
     throw new Error("AIからのテキスト応答がありませんでした");
+  }
+
+  if (message.stop_reason === "max_tokens") {
+    throw new Error(
+      "AIの応答が長さ制限に達し、途中で切れました(max_tokens不足)。"
+    );
   }
 
   // AIがコードブロック(```json ... ```)で返してくることがあるので剥がす
