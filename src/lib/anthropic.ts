@@ -24,7 +24,15 @@ const SYSTEM_PROMPT = `あなたは高校生向けニュース解説アシスタ
   出典が不確かな情報は断定せず「〜と言われています」のように書いてください。
 - 参考記事のURLを絶対に改変しないでください。存在しないURLを作らないでください。
 - 出力は指定されたJSON形式のみで返してください。JSON以外の文章は出力しないでください。
-- 参考記事がサンプル(ダミー)データで具体的な事実が書けない場合でも、その注意書きは一度だけ簡潔に述べれば十分です。timeline・causalExplanation・personalRelevanceのすべてで同じ長い注意書きを繰り返さないでください。`;
+- 参考記事がサンプル(ダミー)データで具体的な事実が書けない場合でも、その注意書きは一度だけ簡潔に述べれば十分です。timeline・causalExplanation・personalRelevanceのすべてで同じ長い注意書きを繰り返さないでください。
+
+【年表(timeline)について】
+- 年表は必須ではありません。参考記事の内容から「いつ→次に何が起きた→今こうなっている」という
+  自然な時系列の流れが読み取れる場合にだけ作成してください。
+- 参考記事が1つの出来事(例:単発のニュース)しか伝えておらず、時系列として並べるほどの
+  複数の出来事が無理なく取れない場合は、無理に作らずtimelineを空配列[]にしてください。
+  存在しない日付や出来事を推測で埋めるくらいなら、空配列にする方が良いです。
+- causalExplanationの文章さえあれば十分に説明できる場合も、timelineは空配列で構いません。`;
 
 function buildUserPrompt(userInput: string, articles: Article[]): string {
   const articlesText = articles
@@ -45,7 +53,10 @@ ${articlesText || "(該当する記事が見つかりませんでした)"}
   "timeline": [{"date": "YYYY-MM または YYYY-MM-DD", "description": "出来事の説明(参考記事の内容に基づく)"}],
   "causalExplanation": "身近な出来事が、どういう流れで社会・政治の問題につながっているかを、高校生にも分かる言葉で3〜5文程度で説明する文章",
   "personalRelevance": "これが読者自身の生活や将来にどう関係するかを1〜2文でまとめた文章"
-}`;
+}
+
+※ timelineは、システムプロンプトの【年表について】の基準を満たす場合だけ配列に要素を入れてください。
+  基準を満たさない場合は "timeline": [] としてください。`;
 }
 
 export async function generateContext(
