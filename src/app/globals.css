@@ -1,20 +1,27 @@
 @import "tailwindcss";
 
+/*
+ * このアプリのUIコンポーネント(ChatUI・ResultCardなど)はすべて
+ * ライトテーマ前提の色(bg-neutral-50, text-neutral-600 など)で
+ * 明示的に組まれており、ダークモード対応のdark:バリアントは付けていない。
+ *
+ * そのため、以前は端末の設定に反応してbody全体だけがダークカラーに
+ * 切り替わる作り(prefers-color-scheme: dark)になっていたが、
+ * カード自体は白背景のままなので、文字色だけが白っぽく変わり
+ * 「白背景に白文字」に近い状態になって読めなくなってしまっていた。
+ * (特にAIの説明文や年表のテキストがほぼ見えなくなる不具合があった)
+ *
+ * きちんとダーク対応する余裕がないため、当面は常にライトテーマに固定する。
+ */
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  color-scheme: light;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
 }
 
 body {

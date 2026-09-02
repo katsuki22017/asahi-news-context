@@ -21,9 +21,18 @@ export function ChatUI() {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const lastMessageRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    const last = messages[messages.length - 1];
+    // AIの返信(結果カード)が届いたときは、回答の先頭が見える位置までスクロールする。
+    // 常に一番下までスクロールすると、スマホなど画面が狭い場合に
+    // 一番大事な説明文(causalExplanation)が画面外に隠れてしまうため。
+    if (last?.role === "assistant") {
+      lastMessageRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    } else {
+      bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
   }, [messages]);
 
   async function handleSend(text: string) {
@@ -65,6 +74,11 @@ export function ChatUI() {
 
   return (
     <div className="flex flex-col h-full max-w-2xl mx-auto w-full">
+      {messages.length === 0 && (
+        <div className="bg-amber-50 border-b border-amber-200 px-4 py-2 text-xs text-amber-800 text-center">
+          現在はプロトタイプ版のため、参考記事は朝日新聞デジタルの実記事から数本のみを収録しています。記事数を増やすことで、より多様な「あれ？」に対応できます。
+        </div>
+      )}
       <div className="flex-1 overflow-y-auto px-4 py-6 space-y-4">
         {messages.length === 0 && (
           <div className="text-center text-neutral-400 mt-12 space-y-4">
@@ -115,8 +129,13 @@ export function ChatUI() {
               </div>
             );
           }
+          const isLastMessage = i === messages.length - 1;
           return (
-            <div key={i} className="flex justify-start">
+            <div
+              key={i}
+              ref={isLastMessage ? lastMessageRef : undefined}
+              className="flex justify-start scroll-mt-3"
+            >
               <div className="bg-neutral-50 border border-neutral-200 rounded-2xl rounded-bl-sm px-4 py-3 max-w-[90%]">
                 <ResultCard result={m.result} />
               </div>
