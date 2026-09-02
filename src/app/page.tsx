@@ -10,7 +10,7 @@ export default function Home() {
         </p>
       </header>
       <div className="bg-amber-50 border-b border-amber-200 px-4 py-2 text-xs text-amber-800 text-center">
-        現在は開発中のため、記事データはサンプル(ダミー)です。実際の朝日新聞デジタルの記事に接続することで、本来の体験になります。
+        現在はプロトタイプ版のため、参考記事は朝日新聞デジタルの実記事から数本のみを収録しています。記事数を増やすことで、より多様な「あれ？」に対応できます。
       </div>
       <main className="flex-1 overflow-hidden">
         <ChatUI />
